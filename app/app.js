@@ -953,8 +953,9 @@ class Todo {
 
   initStyle() {
     this.html.style.display = "grid";
-    this.textElement.style.gridColumn = 1;
-    this.todoRemoveButton.style.gridColumn = 2;
+      this.todoChangeTextButton.style.gridColumn = 1;
+      this.textElement.style.gridColumn = 2;
+      this.todoRemoveButton.style.gridColumn = 3;
   }
 
   updateText(text) {

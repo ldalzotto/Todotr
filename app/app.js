@@ -98,7 +98,7 @@ exports = module.exports = __webpack_require__(/*! ../../node_modules/css-loader
 
 
 // module
-exports.push([module.i, "html,\nbody {\n  width: 100%;\n  height: 100%;\n  margin: 0;\n  padding: 0;\n}\n\nbody {\n  display: grid;\n  grid-template-rows: [first] 50px [row1] 50px [row2] 50px;\n  justify-content: center;\n  align-items: center;\n  font-family: sans-serif;\n  color: #525252;\n}\n\na {\n  text-decoration: none;\n  color: #cb3837;\n}\n", ""]);
+        exports.push([module.i, "html,\nbody {\n  width: 100%;\n  height: 100%;\n  margin: 0;\n  padding: 0;\n}\n\nbody {\n  --main-color: #4db6ac;\n  --main-color-light: #82e9de;\n  --main-color-dark: #00867d;\n\n  --normal-radius: 10px;\n}\n\nbody {\n  display: grid;\n  grid-template-rows: [first] 50px [row1] 50px [row2] 50px [row3] 50px;\n  justify-content: center;\n  align-items: center;\n  font-family: sans-serif;\n  color: #525252;\n  background-color: var(--main-color);\n  transition: all 0.5s ease-out;\n}\n\ninput {\n  background-color: var(--main-color-light);\n  border-color: var(--main-color-dark);\n  border-radius: var(--normal-radius);\n}\n\nbutton {\n  background-color: var(--main-color-dark);\n  color: white;\n  border-radius: var(--normal-radius);\n  cursor: pointer;\n}\n\na {\n  text-decoration: none;\n  color: #cb3837;\n}\n", ""]);
 
 // exports
 
@@ -709,6 +709,8 @@ const AddTodo = __webpack_require__(/*! ./todos/AddTodo */ "./src/todos/AddTodo.
 
 const ClearTodo = __webpack_require__(/*! ./todos/ClearAllTodo */ "./src/todos/ClearAllTodo.js");
 
+        const TodoSearch = __webpack_require__(/*! ./todos/search/TodoSearch */ "./src/todos/search/TodoSearch.js");
+
 const TODO_PAGE = `
   <div id="title">TOTO APP</div>
 `;
@@ -716,9 +718,11 @@ const todos = new Todos();
 todos.addTodo("my TODO");
 const addTodoButton = new AddTodo(todos);
 const clearTodos = new ClearTodo(todos);
+        const todoSearch = new TodoSearch();
 document.getElementsByTagName("body").item(0).innerHTML = TODO_PAGE;
 document.getElementsByTagName("body").item(0).appendChild(addTodoButton.html);
 document.getElementsByTagName("body").item(0).appendChild(clearTodos.html);
+        document.getElementsByTagName("body").item(0).appendChild(todoSearch.html);
 document.getElementsByTagName("body").item(0).appendChild(todos.html);
 
 /***/ }),
@@ -1030,7 +1034,7 @@ class Todos {
       Todos.removeTodo(targetTodo.id);
     });
     this.todoList.push(todo);
-    this.refreshTodoList();
+      refreshTodoList(this);
   }
 
   removeTodo(id) {
@@ -1038,37 +1042,136 @@ class Todos {
 
     if (todoToRemove) {
       this.todoList.splice(this.todoList.indexOf(todoToRemove), 1);
-      this.refreshTodoList();
+        refreshTodoList(this);
     }
   }
 
   clearTodos() {
     this.todoList = [];
-    this.refreshTodoList();
+      refreshTodoList(this);
   }
 
-  refreshTodoList() {
-    while (this.html.firstChild) {
-      this.html.removeChild(this.html.firstChild);
+    getAllTodos() {
+        return this.todoList;
     }
-
-    function updateids() {
-      for (var i = 0; i < this.todoList.length; i++) {
-        this.todoList[i].id = i;
-      }
-    }
-
-    updateids.call(this);
-    this.todoList.forEach(todo => {
-      this.html.appendChild(todo.html);
-    });
-  }
 
 }
 
+        const refreshTodoList = function (todos) {
+            while (todos.html.firstChild) {
+                todos.html.removeChild(todos.html.firstChild);
+            }
+
+            function updateids() {
+                for (var i = 0; i < todos.todoList.length; i++) {
+                    todos.todoList[i].id = i;
+                }
+            }
+
+            updateids.call(todos);
+            todos.todoList.forEach(todo => {
+                todos.html.appendChild(todo.html);
+            });
+        };
+
 module.exports = Todos;
 
-/***/ }),
+        /***/
+    }),
+
+    /***/ "./src/todos/search/TodoSearch.js":
+    /*!****************************************!*\
+      !*** ./src/todos/search/TodoSearch.js ***!
+      \****************************************/
+    /*! no static exports found */
+    /***/ (function (module, exports, __webpack_require__) {
+
+        const TodoSearchButton = __webpack_require__(/*! ./TodoSearchButton */ "./src/todos/search/TodoSearchButton.js");
+
+        const TodoSearchInput = __webpack_require__(/*! ./TodoSearchInput */ "./src/todos/search/TodoSearchInput.js");
+
+        class TodoSearch {
+            constructor() {
+                const container = document.createElement("div");
+                const todoSearchInput = new TodoSearchInput();
+                const todoSearchButton = new TodoSearchButton(todoSearchInput, this);
+                todoSearchButton.registerLaunchStart(event => {
+                    console.log(`wesh ${event}`);
+                });
+                container.appendChild(todoSearchInput.html);
+                container.appendChild(todoSearchButton.html);
+                this.html = container;
+                gridDisplay(this, todoSearchButton, todoSearchInput);
+            }
+
+        }
+
+        const gridDisplay = function (TodoSearch, TodoSearchButton, TodoSearchInput) {
+            TodoSearch.html.style.display = "grid";
+            TodoSearch.html.style.gridTemplateColumns = "auto 30%";
+        };
+
+        module.exports = TodoSearch;
+
+        /***/
+    }),
+
+    /***/ "./src/todos/search/TodoSearchButton.js":
+    /*!**********************************************!*\
+      !*** ./src/todos/search/TodoSearchButton.js ***!
+      \**********************************************/
+    /*! no static exports found */
+    /***/ (function (module, exports) {
+
+        const LaunchSearchTodoEventName = "lauchsearch";
+
+        class TodoSearchButton {
+            constructor(todoSearchInput, todoSearch) {
+                const button = document.createElement("button");
+                button.innerText = "SEARCH";
+                button.addEventListener("click", () => {
+                    const todoSearchText = todoSearchInput.getText();
+                    todoSearch.html.dispatchEvent(new CustomEvent(LaunchSearchTodoEventName, {
+                        detail: todoSearchText
+                    }));
+                });
+                this.html = button;
+            }
+
+            registerLaunchStart(callback) {
+                this.html.addEventListener(LaunchSearchTodoEventName, callback);
+            }
+
+        }
+
+        module.exports = TodoSearchButton;
+
+        /***/
+    }),
+
+    /***/ "./src/todos/search/TodoSearchInput.js":
+    /*!*********************************************!*\
+      !*** ./src/todos/search/TodoSearchInput.js ***!
+      \*********************************************/
+    /*! no static exports found */
+    /***/ (function (module, exports) {
+
+        class TodoSearchInput {
+            constructor() {
+                const input = document.createElement("input");
+                input.type = "text";
+                this.html = input;
+            }
+
+            getText() {
+                return this.html.value;
+            }
+
+        }
+
+        module.exports = TodoSearchInput;
+
+        /***/ }),
 
 /***/ "electron":
 /*!***************************!*\

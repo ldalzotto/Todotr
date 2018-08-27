@@ -2,6 +2,8 @@ import "./stylesheets/main.css";
 // Small helpers you might want to keep
 import "./helpers/context_menu.js";
 import "./helpers/external_links.js";
+// Size listener
+import "./resize/OnResize.js";
 
 // Application code
 const Todo = require("./todos/Todo");
@@ -15,12 +17,11 @@ const TODO_PAGE = `
 `;
 
 const todos = new Todos();
-todos.addTodo("my TODO");
 
 const addTodoButton = new AddTodo(todos);
 const clearTodos = new ClearTodo(todos);
 
-const todoSearch = new TodoSearch();
+const todoSearch = new TodoSearch(todos);
 
 document.getElementsByTagName("body").item(0).innerHTML = TODO_PAGE;
 document.getElementsByTagName("body").item(0).appendChild(addTodoButton.html);

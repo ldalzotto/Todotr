@@ -696,8 +696,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _stylesheets_main_css__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_stylesheets_main_css__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _helpers_context_menu_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./helpers/context_menu.js */ "./src/helpers/context_menu.js");
 /* harmony import */ var _helpers_external_links_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./helpers/external_links.js */ "./src/helpers/external_links.js");
+        /* harmony import */
+        var _resize_OnResize_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./resize/OnResize.js */ "./src/resize/OnResize.js");
+        /* harmony import */
+        var _resize_OnResize_js__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_resize_OnResize_js__WEBPACK_IMPORTED_MODULE_3__);
  // Small helpers you might want to keep
 
+
+        // Size listener
 
  // Application code
 
@@ -715,10 +721,9 @@ const TODO_PAGE = `
   <div id="title">TOTO APP</div>
 `;
 const todos = new Todos();
-todos.addTodo("my TODO");
 const addTodoButton = new AddTodo(todos);
 const clearTodos = new ClearTodo(todos);
-        const todoSearch = new TodoSearch();
+        const todoSearch = new TodoSearch(todos);
 document.getElementsByTagName("body").item(0).innerHTML = TODO_PAGE;
 document.getElementsByTagName("body").item(0).appendChild(addTodoButton.html);
 document.getElementsByTagName("body").item(0).appendChild(clearTodos.html);
@@ -844,7 +849,46 @@ const supportExternalLinks = event => {
 
 document.addEventListener("click", supportExternalLinks, false);
 
-/***/ }),
+        /***/
+    }),
+
+    /***/ "./src/resize/OnResize.js":
+    /*!********************************!*\
+      !*** ./src/resize/OnResize.js ***!
+      \********************************/
+    /*! no static exports found */
+    /***/ (function (module, exports) {
+
+        class OnResize {
+            constructor() {
+                this.widthEvents = [];
+                window.addEventListener('resize', e => {
+                    const width = window.innerWidth;
+                    this.widthEvents.filter(event => event.conditionFn(width)).forEach(event => event.callback());
+                });
+            }
+
+            subscribeWidth(conditionWith, callback) {
+                this.widthEvents.push(new Event(conditionWith, callback));
+
+                if (conditionWith(window.innerWidth)) {
+                    callback();
+                }
+            }
+
+        }
+
+        class Event {
+            constructor(conditionFn, callback) {
+                this.conditionFn = conditionFn;
+                this.callback = callback;
+            }
+
+        }
+
+        module.exports = new OnResize();
+
+        /***/ }),
 
 /***/ "./src/stylesheets/main.css":
 /*!**********************************!*\
@@ -886,20 +930,35 @@ if(false) {}
 class AddTodo {
   constructor(TodosListElement) {
     const html = document.createElement("div");
-    const textArea = document.createElement("input");
-    textArea.type = "text";
+      const textArea = new AddTodoInput();
     const button = document.createElement("button");
     button.innerText = "ADD TODO";
     button.addEventListener('click', () => {
-      TodosListElement.addTodo(textArea.value);
-        textArea.value = "";
+        TodosListElement.addTodo(textArea.getValue());
+        textArea.setValue("");
     });
     html.appendChild(button);
-    html.appendChild(textArea);
+      html.appendChild(textArea.html);
     this.html = html;
   }
 
 }
+
+        class AddTodoInput {
+            constructor() {
+                this.html = document.createElement("input");
+                this.html.type = "text";
+            }
+
+            getValue() {
+                return this.html.value;
+            }
+
+            setValue(value) {
+                this.html.value = value;
+            }
+
+        }
 
 module.exports = AddTodo;
 
@@ -933,7 +992,9 @@ module.exports = ClearAllTodo;
   !*** ./src/todos/Todo.js ***!
   \***************************/
 /*! no static exports found */
-/***/ (function(module, exports) {
+    /***/ (function (module, exports, __webpack_require__) {
+
+        const OnResize = __webpack_require__(/*! ../resize/OnResize */ "./src/resize/OnResize.js");
 
 const deleteEventname = 'deleted';
 
@@ -1091,13 +1152,16 @@ module.exports = Todos;
         const TodoSearchInput = __webpack_require__(/*! ./TodoSearchInput */ "./src/todos/search/TodoSearchInput.js");
 
         class TodoSearch {
-            constructor() {
+            constructor(todosElement) {
                 const container = document.createElement("div");
                 const todoSearchInput = new TodoSearchInput();
-                const todoSearchButton = new TodoSearchButton(todoSearchInput, this);
-                todoSearchButton.registerLaunchStart(event => {
-                    console.log(`wesh ${event}`);
-                });
+                const todoSearchButton = new TodoSearchButton(todoSearchInput);
+
+                todoSearchButton.onSearchCalled = searchText => {
+                    const matchingTodo = todosElement.getAllTodos().filter(todo => todo.text.includes(searchText));
+                    console.log(matchingTodo);
+                };
+
                 container.appendChild(todoSearchInput.html);
                 container.appendChild(todoSearchButton.html);
                 this.html = container;
@@ -1123,23 +1187,19 @@ module.exports = Todos;
     /*! no static exports found */
     /***/ (function (module, exports) {
 
-        const LaunchSearchTodoEventName = "lauchsearch";
-
         class TodoSearchButton {
             constructor(todoSearchInput, todoSearch) {
+                this.onSearchCalled = undefined;
                 const button = document.createElement("button");
                 button.innerText = "SEARCH";
                 button.addEventListener("click", () => {
                     const todoSearchText = todoSearchInput.getText();
-                    todoSearch.html.dispatchEvent(new CustomEvent(LaunchSearchTodoEventName, {
-                        detail: todoSearchText
-                    }));
+
+                    if (this.onSearchCalled) {
+                        this.onSearchCalled(todoSearchText);
+                    }
                 });
                 this.html = button;
-            }
-
-            registerLaunchStart(callback) {
-                this.html.addEventListener(LaunchSearchTodoEventName, callback);
             }
 
         }
@@ -1171,7 +1231,8 @@ module.exports = Todos;
 
         module.exports = TodoSearchInput;
 
-        /***/ }),
+        /***/
+    }),
 
 /***/ "electron":
 /*!***************************!*\

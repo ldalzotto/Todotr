@@ -1,20 +1,18 @@
-const LaunchSearchTodoEventName = "lauchsearch";
-
 class TodoSearchButton {
 
     constructor(todoSearchInput, todoSearch) {
+        this.onSearchCalled = undefined;
         const button = document.createElement("button");
         button.innerText = "SEARCH";
         button.addEventListener("click", () => {
             const todoSearchText = todoSearchInput.getText();
-            todoSearch.html.dispatchEvent(new CustomEvent(LaunchSearchTodoEventName, {detail: todoSearchText}))
+            if (this.onSearchCalled) {
+                this.onSearchCalled(todoSearchText)
+            }
         });
         this.html = button;
     }
 
-    registerLaunchStart(callback) {
-        this.html.addEventListener(LaunchSearchTodoEventName, callback);
-    }
 
 }
 

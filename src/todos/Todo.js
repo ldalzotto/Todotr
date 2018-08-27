@@ -1,3 +1,5 @@
+const OnResize = require("../resize/OnResize");
+
 const deleteEventname = 'deleted';
 
 class Todo {
